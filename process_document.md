@@ -1,11 +1,11 @@
 # My ReturnEasy Project Journey (Process Document)
 
-*This document explains how I planned, built, and finished my ReturnEasy project.*
+This document explains how I planned, built, and finished my ReturnEasy project.
 
 ---
 
 ## 1. What did I understand from the task? What did I decide to build and why?
-* **My Understanding**: The task was to build a return page for a store called "ReturnEasy". A customer received a damaged item and needs a way to submit a return request. The optional bonus was to show the return progress status (like *Return Requested*, *Approved*, or *Refund Processed*) on the details page.
+* **My Understanding**: The task was to build a return request page for a store called "ReturnEasy". A customer received a damaged item and needs a way to submit a return request. The optional bonus was to show the return progress status (like *Return Requested*, *Approved*, or *Refund Processed*) on the details page.
 * **What I decided to build**: Instead of just a simple, boring form, I decided to build a **Customer Return Dashboard**. I did this because it feels like a real, professional shopping site. Customers can see all their past orders in one place, click a button to return items, and track their return progress using a step-by-step timeline.
 
 ---
@@ -45,9 +45,20 @@ I made a simple 5-step plan before writing any code:
 
 ---
 
-## 6. What was the hardest part? How did I solve it?
-* **The Challenge**: The hardest part was keeping everything on the screen synchronized. For example, when you approve a return using the simulator, the order card status, the statistics bar, and the progress timeline all need to change immediately.
-* **How I solved it**: I stored all order information in one main JavaScript array. Whenever any status changes, the script updates that array, saves it to `localStorage`, and instantly runs my rendering functions to redraw the screen with the fresh data.
+## 6. What was the hardest part? How did I figure it out or solve it? (Bugs I had to fix)
+While building the app, I ran into three main bugs that I struggled with:
+
+* **Bug 1: The Quantity Selector Loophole**
+  * *The Problem*: When selecting items to return in the form, I noticed the user could click the plus (`+`) and minus (`-`) buttons to increase quantities even if the checkbox for that item was NOT selected. This meant they could submit quantities for items they didn't actually check.
+  * *How I fixed it*: I updated the JavaScript toggle code. Now, when a checkbox is unchecked, the quantity picker is visually faded out and has `pointer-events: none` (making it unclickable), and its value is reset back to `1`. It only activates when the checkbox is ticked.
+
+* **Bug 2: Modal Overlapping (CSS z-index)**
+  * *The Problem*: When I opened the return popup modal, it was displaying *behind* the Admin Simulator panel at the bottom of the screen. I couldn't click the "Submit Request" button because the admin panel was blocking it.
+  * *How I fixed it*: I had to search how CSS layers work. I added `z-index: 1000` to the modal overlay stylesheet, and set `z-index: 999` on the admin simulator. This fixed the layout layer order so the popup displays on top of everything.
+
+* **Bug 3: State Sync & Reset Errors**
+  * *The Problem*: When I submitted a return request, the dashboard stats cards (Total returns, refunds) didn't update immediately. Also, clicking the simulator "Reset Data" button refreshed the page, but the old returns were still showing up because the browser cache wasn't cleared.
+  * *How I fixed it*: I centralized the rendering logic. Instead of just refreshing the page, I made sure all submit and reset actions write to `localStorage` first, clear the old cache, and then run `renderStats()` and `renderOrders()` to force the page to redraw with clean data.
 
 ---
 
