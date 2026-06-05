@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ReturnEasy | Premium Returns Dashboard</title>
+  <meta name="description" content="Manage your orders, initiate return requests, and track your refunds easily with ReturnEasy's responsive self-service dashboard.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Toast Notification System -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <div class="container">
+    
+    <!-- Header Navigation -->
+    <header>
+      <div class="brand">
+        <div class="brand-icon">R</div>
+        <div>
+          <h1 class="brand-name">ReturnEasy</h1>
+          <p class="subtitle">Self-Service Returns Center</p>
+        </div>
+      </div>
+      <div class="user-profile" style="display: flex; align-items: center; gap: 0.75rem;">
+        <span style="font-size: 0.9rem; font-weight: 500; color: var(--text-secondary);">Welcome back, Sparsh</span>
+        <div class="avatar" style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--accent)); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.9rem; border: 1px solid var(--border-color);">S</div>
+      </div>
+    </header>
+
+    <!-- Stats Dashboard Area -->
+    <section class="stats-grid">
+      <div class="stat-card" id="stat-total-orders">
+        <span class="stat-title">Total Orders</span>
+        <span class="stat-value">0</span>
+        <span class="stat-desc">Completed purchases</span>
+      </div>
+      <div class="stat-card" id="stat-delivered">
+        <span class="stat-title">Delivered</span>
+        <span class="stat-value">0</span>
+        <span class="stat-desc">Eligible for returns</span>
+      </div>
+      <div class="stat-card" id="stat-returned">
+        <span class="stat-title">Returns Requested</span>
+        <span class="stat-value">0</span>
+        <span class="stat-desc">Currently in review</span>
+      </div>
+      <div class="stat-card" id="stat-refunded">
+        <span class="stat-title">Refunds Issued</span>
+        <span class="stat-value">0</span>
+        <span class="stat-desc">Successfully completed</span>
+      </div>
+    </section>
+
+    <!-- Filter Control bar and Section Title -->
+    <section class="section-header">
+      <div>
+        <h2 class="section-title" id="dashboard-title">Your Orders</h2>
+      </div>
+      <div class="filter-controls" style="display: flex; gap: 0.5rem;">
+        <button class="btn btn-secondary filter-btn btn-active" data-filter="all" id="btn-filter-all" style="padding: 0.45rem 1rem; font-size: 0.8rem;">All</button>
+        <button class="btn btn-secondary filter-btn" data-filter="delivered" id="btn-filter-delivered" style="padding: 0.45rem 1rem; font-size: 0.8rem;">Delivered</button>
+        <button class="btn btn-secondary filter-btn" data-filter="returns" id="btn-filter-returns" style="padding: 0.45rem 1rem; font-size: 0.8rem;">Returns & Refunds</button>
+      </div>
+    </section>
+
+    <!-- Dynamic Orders Container -->
+    <main class="orders-grid" id="orders-container">
+      <!-- Dynamically filled by app.js -->
+    </main>
+
+  </div>
+
+  <!-- RETURN REQUEST FORM MODAL -->
+  <div class="modal-overlay" id="return-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title" id="return-modal-title">Initiate Return</h3>
+        <button class="modal-close" id="close-return-modal">&times;</button>
+      </div>
+      
+      <!-- Modal form state -->
+      <div class="modal-body" id="return-form-state">
+        <form id="return-form">
+          <input type="hidden" id="form-order-id">
+          
+          <!-- Step 1: Select Items -->
+          <div class="form-group">
+            <span class="form-label">1. Select items to return</span>
+            <div class="return-item-selector" id="form-item-selector">
+              <!-- Dynamically populated product list -->
+            </div>
+            <p id="item-selection-error" style="color: var(--color-cancelled); font-size: 0.8rem; display: none; margin-top: -1rem; margin-bottom: 1rem;">Please select at least one item to return.</p>
+          </div>
+
+          <!-- Step 2: Choose Reason -->
+          <div class="form-group">
+            <label class="form-label" for="return-reason">2. Reason for return</label>
+            <select class="form-select" id="return-reason" required>
+              <option value="" disabled selected>Choose a reason...</option>
+              <option value="Damaged">Damaged / Defective product</option>
+              <option value="Wrong Item">Received the wrong item</option>
+              <option value="Not as Described">Not as described / looks different</option>
+              <option value="Changed Mind">Changed my mind / No longer needed</option>
+            </select>
+          </div>
+
+          <!-- Step 3: Photo Upload (Conditional for Damaged) -->
+          <div class="form-group" id="photo-upload-group" style="display: none; transform: translateY(-5px); transition: all 0.2s ease;">
+            <label class="form-label">3. Proof of defect (Required for damaged items)</label>
+            <div class="dropzone" id="image-dropzone">
+              <div class="dropzone-icon">📸</div>
+              <div class="dropzone-text">Click to upload photos or drag them here</div>
+              <div class="dropzone-hint">PNG, JPG up to 10MB</div>
+              <input type="file" id="image-input" accept="image/*" multiple style="display: none;">
+            </div>
+            <div class="uploaded-files-list" id="uploaded-files-preview"></div>
+            <p id="photo-error" style="color: var(--color-cancelled); font-size: 0.8rem; display: none; margin-top: 0.5rem;">Proof of defect is required for damaged items.</p>
+          </div>
+
+          <!-- Step 4: Additional details -->
+          <div class="form-group">
+            <label class="form-label" for="return-comments">Additional comments (Optional)</label>
+            <textarea class="form-textarea" id="return-comments" placeholder="Please describe the issue in detail to help us expedite your request..."></textarea>
+          </div>
+        </form>
+      </div>
+
+      <!-- Modal confirmation state (hidden by default) -->
+      <div class="modal-body" id="return-success-state" style="display: none;">
+        <div class="success-animation-container">
+          <svg class="success-icon" viewBox="0 0 88 88">
+            <circle cx="44" cy="44" r="40" />
+            <path d="M26 44 l12 12 l24 -24" />
+          </svg>
+          <h3 class="success-title">Return Requested!</h3>
+          <p class="success-message" id="success-state-msg">Your return request for Order #12345 has been submitted successfully. We are reviewing your details.</p>
+          <div class="detail-block" style="background-color: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem; width: 100%; text-align: left; margin-bottom: 1.5rem;">
+            <h4 style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.25rem;">Estimated Review Time</h4>
+            <p style="font-size: 0.95rem; font-weight: 600; color: var(--color-delivered);">Within 24 - 48 Hours</p>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem;">You will receive an email confirmation containing the return label once approved.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer" id="modal-actions-footer">
+        <button class="btn btn-secondary" id="btn-cancel-return">Cancel</button>
+        <button class="btn btn-primary" id="btn-submit-return">Submit Request</button>
+      </div>
+      <div class="modal-footer" id="modal-success-footer" style="display: none;">
+        <button class="btn btn-primary" id="btn-close-success" style="width: 100%;">Close & View Return Status</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ORDER / RETURN DETAILS MODAL -->
+  <div class="modal-overlay" id="details-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title" id="details-modal-title">Order Details</h3>
+        <button class="modal-close" id="close-details-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Timeline Progress Tracker -->
+        <h4 class="form-label" style="margin-bottom: 1rem;">Return Tracking Status</h4>
+        <div class="return-stepper">
+          <div class="step-progress-bar" id="stepper-progress"></div>
+          
+          <div class="step completed" id="step-placed">
+            <div class="step-icon">1</div>
+            <div class="step-label">Ordered</div>
+            <div class="step-desc" id="step-placed-date">Order placed</div>
+          </div>
+          <div class="step" id="step-requested">
+            <div class="step-icon">2</div>
+            <div class="step-label">Requested</div>
+            <div class="step-desc" id="step-requested-date">Return request</div>
+          </div>
+          <div class="step" id="step-approved">
+            <div class="step-icon">3</div>
+            <div class="step-label">Approved</div>
+            <div class="step-desc" id="step-approved-date">Pending review</div>
+          </div>
+          <div class="step" id="step-refunded">
+            <div class="step-icon">4</div>
+            <div class="step-label">Refund Processed</div>
+            <div class="step-desc" id="step-refunded-date">Refund issue</div>
+          </div>
+        </div>
+
+        <!-- Items display -->
+        <h4 class="form-label" style="margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">Items List</h4>
+        <div class="order-items" id="details-items-list" style="margin-top: 1rem;">
+          <!-- Populated by JavaScript -->
+        </div>
+
+        <!-- Return Details section (Visible only if return requested) -->
+        <div id="details-return-section" style="display: none;">
+          <h4 class="form-label" style="margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">Return Request Summary</h4>
+          <div class="detail-summary-grid">
+            <div class="detail-block">
+              <h4>Reason for Return</h4>
+              <p id="details-return-reason">-</p>
+            </div>
+            <div class="detail-block">
+              <h4>Request Date</h4>
+              <p id="details-return-date">-</p>
+            </div>
+            <div class="detail-block" style="grid-column: span 2;">
+              <h4>Returned Items & Quantities</h4>
+              <p id="details-return-items">-</p>
+            </div>
+            <div class="detail-block" style="grid-column: span 2;">
+              <h4>Customer Comments</h4>
+              <p id="details-return-comments">-</p>
+            </div>
+            <div class="detail-block" id="details-return-proof-block" style="grid-column: span 2; display: none;">
+              <h4>Proof Uploads</h4>
+              <div id="details-return-proof-imgs" style="display: flex; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap;">
+                <!-- Proof thumbnails -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="btn-close-details" style="width: 100%;">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- INTERACTIVE ADMIN SIMULATOR CONTROL PANEL -->
+  <div class="sim-panel-toggle">
+    <button class="btn btn-primary" id="btn-toggle-sim" style="border-radius: 50px; padding: 0.75rem 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+      🛠️ Admin Simulator
+    </button>
+  </div>
+
+  <div class="sim-panel" id="admin-sim-panel">
+    <div class="sim-container">
+      <div class="sim-header">
+        <span class="sim-badge">Simulation</span>
+        <h4 class="sim-title">Status Control Center</h4>
+      </div>
+      
+      <div class="sim-controls">
+        <label style="font-size: 0.85rem; color: var(--text-secondary);" for="sim-order-select">Select Order:</label>
+        <select class="sim-select" id="sim-order-select">
+          <!-- Populated by JavaScript -->
+        </select>
+
+        <button class="sim-btn sim-btn-approve" id="sim-btn-approve" disabled>Approve Return</button>
+        <button class="sim-btn sim-btn-refund" id="sim-btn-refund" disabled>Process Refund</button>
+        <button class="sim-btn sim-btn-reset" id="sim-btn-reset">Reset Dashboard Data</button>
+      </div>
+
+      <button class="sim-close" id="btn-close-sim">&times;</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
